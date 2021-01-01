@@ -37,16 +37,22 @@ import * as fs from 'fs'
     }
    //call filterImageFromURL(image_url) to filter the image
     const filePath=await filterImageFromURL(image_url)
-
    //send the resulting file in the response
     res.status(200).sendFile(filePath,async()=>{
       //get list from all saved files to delete it 
-     let files= fs.readdirSync(__dirname+'/util/tmp/').map(file => {
-       return __dirname+'/util/tmp/'+file
-      });
-      
-      //deletes any files on the server on finish of the response
-      await deleteLocalFiles(files)
+     fs.readdir(__dirname+'/util/tmp/',async (err,files)=>{
+      let filesPAths=files &&files.map(file => {
+        return __dirname+'/util/tmp/'+file
+       });
+       filesPAths ?
+       //deletes any old files on the server on finish of the response
+        await deleteLocalFiles(filesPAths)
+        :
+        //if delete old file failed delete current file
+        await deleteLocalFiles([filePath])
+     })
+     
+     
     })
     
   })
