@@ -31,30 +31,32 @@ import * as fs from 'fs'
   /**************************************************************************** */
   app.get('/filteredimage',async (req,res)=>{
       //validate the image_url query
-    const {image_url}=req.query
-    if(!image_url){
-      return res.status(400).send({ message: 'image_url is required' })
-    }
-   //call filterImageFromURL(image_url) to filter the image
-    const filePath=await filterImageFromURL(image_url)
-   //send the resulting file in the response
-    res.status(200).sendFile(filePath,async()=>{
+      const {image_url}=req.query
+      if(!image_url){
+        return res.status(400).send({ message: 'image_url is required' })
+      }
+      //call filterImageFromURL(image_url) to filter the image
+      const filePath=await filterImageFromURL(image_url)
+      if(filePath==='error'){
+        return res.status(422).send({ message: 'Error: Invalid image url' })
+      }
+      //send the resulting file in the response
+      res.status(200).sendFile(filePath,async()=>{
       //get list from all saved files to delete it 
-     fs.readdir(__dirname+'/util/tmp/',async (err,files)=>{
-      let filesPAths=files &&files.map(file => {
-        return __dirname+'/util/tmp/'+file
-       });
-       filesPAths ?
-       //deletes any old files on the server on finish of the response
-        await deleteLocalFiles(filesPAths)
-        :
-        //if delete old file failed delete current file
-        await deleteLocalFiles([filePath])
+      fs.readdir(__dirname+'/util/tmp/',async (err,files)=>{
+        let filesPAths=files &&files.map(file => {
+          return __dirname+'/util/tmp/'+file
+        });
+
+        filesPAths 
+         ?
+        //deletes any old files on the server on finish of the response
+         await deleteLocalFiles(filesPAths)
+         :
+         //if delete old file failed delete current file
+         await deleteLocalFiles([filePath])
+      })
      })
-     
-     
-    })
-    
   })
 
   //! END @TODO1
